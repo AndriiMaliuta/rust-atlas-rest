@@ -3,6 +3,8 @@ use serde::Deserialize;
 use base64::encode;
 use reqwest::Error;
 
+mod pages;
+
 #[derive(Deserialize, Debug)]
 struct Content {
     id: i32,
@@ -68,7 +70,8 @@ async fn main() -> Result<(), Error> {
         .send()
         .await?;
 
-    let contents: ContentResponse = res.json();
-    println!("{:?}", res);
+    let contents: ContentResponse = res.json::<ContentResponse>().await.unwrap();
+    println!("{:?}", contents);
+
     Ok(())
 }
