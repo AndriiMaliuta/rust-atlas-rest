@@ -1,27 +1,91 @@
 use std::collections::HashMap;
-use serde::Deserialize;
+use std::future::Future;
+use std::os::unix::raw::ino_t;
+use serde::{Deserialize, Serialize};
 use base64::encode;
 use reqwest::Error;
 
 mod pages;
 
-#[derive(Deserialize, Debug)]
-struct Content {
-    id: i32,
-    title: String,
-    body: String,
+#[derive(Deserialize, Serialize, Debug)]
+#[allow(non_snake_case)]
+struct Extentions {
+    #[serde(skip_serializing_if = "Map::is_empty")]
+    position: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(u8)]
+enum PositionEnum {
+    Str = 2,
+    Numm = 3,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+#[allow(non_snake_case)]
+struct Content {
+    id: String,
+    #[serde(rename(serialize = "type"))]
+    #[serde(rename(deserialize = "type"))]
+    Type: String,
+    status: String,
+    title: String,
+    extensions: Extentions,
+    _expandable: Expandable,
+    _links: ContentLinks,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+#[allow(non_snake_case)]
+struct Expandable {
+    container: String,
+    metadata: String,
+    operations: String,
+    children: String,
+    restrictions: String,
+    history: String,
+    ancestors: String,
+    body: String,
+    version: String,
+    descendants: String,
+    space: String,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+#[allow(non_snake_case)]
+struct ContentLinks {
+    #[serde(rename(serialize = "self"))]
+    #[serde(rename(deserialize = "self"))]
+    sself: String,
+    webui: String,
+    edit: String,
+    tinyui: String,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+#[allow(non_snake_case)]
+struct Links {
+    #[serde(rename(serialize = "self"))]
+    #[serde(rename(deserialize = "self"))]
+    sself: String,
+    // #[serde(skip_serializing_if = "Option::is_none")]
+    next: String,
+    base: String,
+    context: String,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+#[allow(non_snake_case)]
 struct ContentResponse {
     results: Vec<Content>,
     start: i8,
     limit: i8,
     size: i8,
-    _links: Vec<String>,
+    // #[serde(skip_serializing_if = "Option::is_none")]
+    _links: Links,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 struct User {
     login: String,
     id: u32,
@@ -47,8 +111,8 @@ struct User {
 // }
 
 #[tokio::main]
-async fn main() -> Result<(), Error> {
-    println!("{}", ">>>>> Starting");
+async fn main() -> Result<(),   Error> {
+    println!("{}", "[ *** ] Starting");
     let request_url= format!("http://localhost:{port}/rest/api/content",
                                port = 7201);
     let token = encode(b"admin:admin");
@@ -70,8 +134,11 @@ async fn main() -> Result<(), Error> {
         .send()
         .await?;
 
-    let contents: ContentResponse = res.json::<ContentResponse>().await.unwrap();
-    println!("{:?}", contents);
+    // let contents: ContentResponse = res.json::<ContentResponse>().await.unwrap();
+    // let content_text = res.text().await?;
+    // println!("{}", content_text);
+    let content: ContentResponse = res.json().await?;
+    println!("{:?}", content);
 
     Ok(())
 }
