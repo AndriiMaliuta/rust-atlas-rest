@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fmt::format;
 use std::future::Future;
-use serde::{Deserialize, Serialize, PartialEq, Clone};
+use serde::{Deserialize, Serialize};
 use base64::encode;
 use reqwest::Error;
 use serde_json::Value;
@@ -30,6 +30,7 @@ pub struct Content {
     status: String,
     title: String,
     extensions: Extentions,
+    #[serde(rename(deserialize = "_expandable"))]
     _expandable: Expandable,
     _links: ContentLinks,
 }
@@ -68,7 +69,7 @@ pub struct Links {
     #[serde(rename(deserialize = "self"))]
     sself: String,
     #[serde(skip_serializing_if = "String::is_empty")]
-    #[serde(skip_deserializing_if = "String::is_empty")]
+    // #[serde(skip_deserializing_if = "String::is_empty")]
     next: String,
     base: String,
     context: String,
@@ -82,6 +83,7 @@ pub struct ContentResponse {
     limit: i8,
     size: i8,
     // #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip)]
     _links: Links,
 }
 
@@ -101,12 +103,14 @@ pub struct CreatePage {
 
 async fn create_page(page: CreatePage) -> Content {
     let mut map = HashMap::new();
-    map.insert("title", "Some page");
-    map.insert("space", "test45");
+    map.insert("title", page.title);
+    map.insert("space", page.space_key);
+    map.insert("body", "???".to_string()); //todo: pass body object
 
     // let request_url= format!("http://localhost:{port}/rest/api/content",
     //                          port = 7201);
-    let request_url= format!("http://confl-loadb-pxymvhygf6ct-1493255270.us-west-2.elb.amazonaws.com/rest/api/content");
+    let request_url=
+        format!("http://confl-loadb-pxymvhygf6ct-1493255270.us-west-2.elb.amazonaws.com/rest/api/content?type=page");
     let client = reqwest::Client::new();
     let res = client.post(&request_url)
         .json(&map)
@@ -122,7 +126,7 @@ async fn main() -> Result<(),   Error> {
     let dc_url = "http://confl-loadb-pxymvhygf6ct-1493255270.us-west-2.elb.amazonaws.com";
     // let request_url= format!("http://localhost:{port}/rest/api/content",
     //                          port = 7201);
-    let request_url= format!("{}/rest/api/content", dc_url);
+    let request_url= format!("{}/rest/api/content?type=page", dc_url);
     let token = encode(b"admin:admin");
     println!("{}", request_url);
     let client = reqwest::Client::new();
@@ -142,7 +146,7 @@ async fn main() -> Result<(),   Error> {
             .send()
             .await?;
         let page: CntPage = page_res.json().await?;
-        println!("{:?}", page)
+        println!("{:?}", page.id)
     }
 
     Ok(())
@@ -165,9 +169,11 @@ pub struct CntPage {
     pub version: Version,
     pub extensions: Extentions,
     #[serde(rename = "_links")]
+    #[serde(skip)]
     pub links: Links,
-    #[serde(rename = "_expandable")]
-    pub expandable: CntExpandable,
+    #[serde(skip)]
+    // #[serde(rename = "_expandable")]
+    pub expandable: Expandable,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -179,8 +185,10 @@ pub struct CntSpace {
     #[serde(rename = "type")]
     pub type_field: String,
     #[serde(rename = "_links")]
+    #[serde(skip)]
     pub links: Links,
-    #[serde(rename = "_expandable")]
+    // #[serde(rename = "_expandable")]
+    #[serde(skip)]
     pub expandable: CntExpandable,
 }
 
@@ -191,8 +199,10 @@ pub struct CntHistory {
     pub created_by: CreatedBy,
     pub created_date: String,
     #[serde(rename = "_links")]
+    #[serde(skip)]
     pub links: Links,
-    #[serde(rename = "_expandable")]
+    // #[serde(rename = "_expandable")]
+    #[serde(skip)]
     pub expandable: CntExpandable,
 }
 
@@ -224,8 +234,10 @@ pub struct Version {
     pub minor_edit: bool,
     pub hidden: bool,
     #[serde(rename = "_links")]
+    #[serde(skip)]
     pub links: Links,
-    #[serde(rename = "_expandable")]
+    // #[serde(rename = "_expandable")]
+    #[serde(skip)]
     pub expandable: CntExpandable,
 }
 
@@ -242,6 +254,7 @@ pub struct By {
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CntExpandable {
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub container: String,
     pub metadata: String,
     pub operations: String,
