@@ -62,9 +62,11 @@ pub struct Links {
     #[serde(rename(serialize = "self"))]
     #[serde(rename(deserialize = "self"))]
     pub sself: String,
+    // #[serde(skip_serializing_if = "String::is_empty()")]
+    // #[serde(skip_deserializing_if = "String::is_empty()")]
+    // pub next: String,
     #[serde(skip_serializing_if = "String::is_empty()")]
     #[serde(skip_deserializing_if = "String::is_empty()")]
-    pub next: String,
     pub base: String,
     #[serde(skip_serializing_if = "String::is_empty()")]
     pub context: String,
@@ -78,6 +80,8 @@ pub struct ContentResponse {
     pub limit: i8,
     pub size: i8,
     // #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename(serialize = "_links"))]
+    #[serde(rename(deserialize = "_links"))]
     pub _links: Links,
 }
 
