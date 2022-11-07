@@ -1,0 +1,38 @@
+[
+  {
+    "title": "Page Rust 1",
+    "type": "page",
+    "space": {
+      "key": "DEV"
+    },
+    "body": {
+      "storage": {
+        "representation": "storage",
+        "value": "lorem..."
+      }
+    },
+    "ancestors": [
+      {
+        "id": 1048691
+      }
+    ]
+  },
+  {
+    "type": "page",
+    "title": "new page",
+    "ancestors": [
+      {
+        "id": 456
+      }
+    ],
+    "space": {
+      "key": "TST"
+    },
+    "body": {
+      "storage": {
+        "value": "<p>This is a new page</p>",
+        "representation": "storage"
+      }
+    }
+  }
+]

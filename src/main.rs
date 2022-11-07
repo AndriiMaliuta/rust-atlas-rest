@@ -1,10 +1,90 @@
 use std::collections::HashMap;
 use std::fmt::format;
 use std::future::Future;
+use std::iter::Map;
 use serde::{Deserialize, Serialize};
 use base64::encode;
-use reqwest::Error;
-use serde_json::Value;
+use reqwest::{Body, Error};
+use serde_json::{json, Value};
+
+
+// create page
+async fn create_page(page: CreatePage) {
+    // let request_url= format!("http://localhost:{port}/rest/api/content", port = 7201);
+    let token = encode(b"admin:admin");
+    let request_url=
+        format!("http://confl-loadb-pxymvhygf6ct-1493255270.us-west-2.elb.amazonaws.com/rest/api/content/");
+    let client = reqwest::Client::new();
+    let res = client.post(&request_url)
+        .json(&page)
+        .header("Authorization", format!("Basic {token}"))
+        .send()
+        .await.unwrap();
+    let created: String= res.text().await.unwrap();
+    println!("{:?}", created);
+}
+
+
+// MAIN
+#[tokio::main]
+async fn main() -> Result<(),   Error> {
+    println!("{}", "[ *** ] Starting");
+    let dc_url = "http://confl-loadb-pxymvhygf6ct-1493255270.us-west-2.elb.amazonaws.com";
+    // let request_url= format!("http://localhost:{port}/rest/api/content",
+    //                          port = 7201);
+
+    /*
+    let request_url= format!("{}/rest/api/content/?type=page", dc_url);
+    let token = encode(b"admin:admin");
+    println!("{}", request_url);
+    let client = reqwest::Client::new();
+    let res = client
+        .get(&request_url)
+        .header("Authorization", format!("Basic {token}"))
+        .send()
+        .await?;
+
+    let pages: ContentResponse = res.json().await?;
+    // println!("{:?}", pages.results);
+
+    for page in pages.results {
+        let get_page = format!("{}/rest/api/content/{id}/", dc_url, id=page.id);
+        let page_res = client.get(get_page)
+            .header("Authorization", format!("Basic {token}"))
+            .send()
+            .await?;
+        let page: CntPage = page_res.json().await?;
+        println!("{:?}", page.id)
+    }
+     */
+
+
+    // CREATE PAGE
+    let mut to_create: CreatePage = CreatePage {
+        title: "Page Rust 1".to_string(),
+        ctype: "page".to_string(),
+        space: CreatePageSpace {
+            key: "DEV14".to_string(),
+        },
+        body: PageBody {
+            storage: Storage {
+                representation: "storage".to_string(),
+                value: "lorem...".to_string(),
+            }
+        },
+        ancestors: vec![Ancestor {
+            id: 1048691
+        }]
+    };
+
+    println!("{:?}", serde_json::to_string(&to_create));
+
+    let created = create_page(to_create);
+    let fin = created.await;
+
+    Ok(())
+}
+
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[allow(non_snake_case)]
@@ -96,64 +176,37 @@ pub struct User {
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CreatePage {
     title: String,
-    body: String,
-    space_key: String,
-    parent_id: String,
+    #[serde(rename(serialize = "type"))]
+    #[serde(rename(deserialize = "type"))]
+    ctype: String,
+    space: CreatePageSpace,
+    body: PageBody,
+    ancestors: Vec<Ancestor>
 }
 
-async fn create_page(page: CreatePage) -> Content {
-    let mut map = HashMap::new();
-    map.insert("title", page.title);
-    map.insert("space", page.space_key);
-    map.insert("body", "???".to_string()); //todo: pass body object
-
-    // let request_url= format!("http://localhost:{port}/rest/api/content",
-    //                          port = 7201);
-    let request_url=
-        format!("http://confl-loadb-pxymvhygf6ct-1493255270.us-west-2.elb.amazonaws.com/rest/api/content?type=page");
-    let client = reqwest::Client::new();
-    let res = client.post(&request_url)
-        .json(&map)
-        .send()
-        .await.unwrap();
-    let created: Content = res.json().await.unwrap();
-    created
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PageBody {
+    storage: Storage,
 }
 
-#[tokio::main]
-async fn main() -> Result<(),   Error> {
-    println!("{}", "[ *** ] Starting");
-    let dc_url = "http://confl-loadb-pxymvhygf6ct-1493255270.us-west-2.elb.amazonaws.com";
-    // let request_url= format!("http://localhost:{port}/rest/api/content",
-    //                          port = 7201);
-    let request_url= format!("{}/rest/api/content?type=page", dc_url);
-    let token = encode(b"admin:admin");
-    println!("{}", request_url);
-    let client = reqwest::Client::new();
-    let res = client
-        .get(&request_url)
-        .header("Authorization", format!("Basic {token}"))
-        .send()
-        .await?;
-
-    let pages: ContentResponse = res.json().await?;
-    // println!("{:?}", pages.results);
-
-    for page in pages.results {
-        let get_page = format!("{}/rest/api/content/{id}", dc_url, id=page.id);
-        let page_res = client.get(get_page)
-            .header("Authorization", format!("Basic {token}"))
-            .send()
-            .await?;
-        let page: CntPage = page_res.json().await?;
-        println!("{:?}", page.id)
-    }
-
-    Ok(())
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+struct Storage {
+    representation: String,
+    value: String,
 }
 
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CreatePageSpace {
+    key : String
+}
+
+/////////
 
 
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Ancestor {
+    id: i32,
+}
 
 // One content page
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
