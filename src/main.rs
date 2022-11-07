@@ -60,27 +60,29 @@ async fn main() -> Result<(),   Error> {
 
 
     // CREATE PAGE
-    let mut to_create: CreatePage = CreatePage {
-        title: "Page Rust 1".to_string(),
-        ctype: "page".to_string(),
-        space: CreatePageSpace {
-            key: "DEV14".to_string(),
-        },
-        body: PageBody {
-            storage: Storage {
-                representation: "storage".to_string(),
-                value: "lorem...".to_string(),
-            }
-        },
-        ancestors: vec![Ancestor {
-            id: 1048691
-        }]
-    };
+    for a in 2..20 {
+        let mut to_create: CreatePage = CreatePage {
+            title: format!("Page Rust {a}"),
+            ctype: "page".to_string(),
+            space: CreatePageSpace {
+                key: "DEV14".to_string(),
+            },
+            body: PageBody {
+                storage: Storage {
+                    representation: "storage".to_string(),
+                    value: "Lorem ipsum dolor sit amet consectetur adipiscing elit mal...".to_string(),
+                }
+            },
+            ancestors: vec![Ancestor {
+                id: 1048691
+            }]
+        };
 
-    println!("{:?}", serde_json::to_string(&to_create));
+        println!("{:?}", serde_json::to_string(&to_create));
 
-    let created = create_page(to_create);
-    let fin = created.await;
+        let created = create_page(to_create);
+        let fin = created.await;
+    }
 
     Ok(())
 }
