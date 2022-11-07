@@ -1133,6 +1133,7 @@ version = "0.1.0"
 dependencies = [
  "base64 0.20.0-alpha.1",
  "mongodb",
+ "rand",
  "reqwest",
  "serde",
  "serde_json",

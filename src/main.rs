@@ -6,6 +6,8 @@ use serde::{Deserialize, Serialize};
 use base64::encode;
 use reqwest::{Body, Error};
 use serde_json::{json, Value};
+use tokio::time::Instant;
+use rand::Rng;
 
 
 // create page
@@ -28,6 +30,7 @@ async fn create_page(page: CreatePage) {
 // MAIN
 #[tokio::main]
 async fn main() -> Result<(),   Error> {
+    let mut start = Instant::now();
     println!("{}", "[ *** ] Starting");
     let dc_url = "http://confl-loadb-pxymvhygf6ct-1493255270.us-west-2.elb.amazonaws.com";
     // let request_url= format!("http://localhost:{port}/rest/api/content",
@@ -60,21 +63,21 @@ async fn main() -> Result<(),   Error> {
 
 
     // CREATE PAGE
-    for a in 2..20 {
+    for a in 21..=40 {
         let mut to_create: CreatePage = CreatePage {
-            title: format!("Page Rust {a}"),
+            title: format!("RUST page {a}"),
             ctype: "page".to_string(),
             space: CreatePageSpace {
-                key: "DEV14".to_string(),
+                key: "DEV12".to_string(),
             },
             body: PageBody {
                 storage: Storage {
                     representation: "storage".to_string(),
-                    value: "Lorem ipsum dolor sit amet consectetur adipiscing elit mal...".to_string(),
+                    value: rand_string(100),
                 }
             },
             ancestors: vec![Ancestor {
-                id: 1048691
+                id: 1048683
             }]
         };
 
@@ -83,6 +86,9 @@ async fn main() -> Result<(),   Error> {
         let created = create_page(to_create);
         let fin = created.await;
     }
+
+    let mut end: u128 = start.elapsed().as_millis();
+    println!("{:?}", println!(">>> Action took :: {end} millis"));
 
     Ok(())
 }
@@ -318,4 +324,18 @@ pub struct CntExpandable {
     pub ancestors: String,
     pub body: String,
     pub descendants: String,
+}
+
+fn rand_string(size: i32) -> String {
+    let text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut \
+    labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip \
+    ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla \
+    pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
+    let words = text.split(" ").collect::<Vec<&str>>();
+    let mut lorem = "".to_string();
+    for a in 1..size {
+        let mut num = rand::thread_rng().gen_range(0..words.len());
+        lorem = [lorem, words[num].to_string()].join(" ");
+    }
+    lorem.to_string()
 }
